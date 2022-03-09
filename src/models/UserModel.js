@@ -16,11 +16,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         trim: true,
         lowercase: true,
-        validate(value) {
-            if (!validator.isEmail(value)) {
-                throw new Error('Invalid Email.')
-            }
-        }
+        // validate(value) {
+        //     if (!validator.isEmail(value)) {
+        //         throw new Error('Invalid Email.')
+        //     }
+        // }
     },
 
     bio: {
@@ -49,22 +49,24 @@ const userSchema = new mongoose.Schema({
     reviews: new mongoose.Schema({
         reviewer_id:  {
             type: mongoose.Schema.Types.ObjectId,
-            required: true
         },
 
         message: {
             type: String,
-            required: true
         },
 
         starsCount: {
             type: Number,
-            required: true
         }
     }, {
         timestamps: true
     }),
 
+    otpCode: {
+        type: Number,
+        select: false,
+        default: 0
+    },
 
     refferedTo: new mongoose.Schema({
         client_id: {
@@ -91,11 +93,11 @@ const userSchema = new mongoose.Schema({
 
     imageUrl: {
         type: String,
-        validate(value) {
-            if (value < 0) {
-                throw new Error('Age a must be positive number.')
-            }
-        }
+        // validate(value) {
+        //     if (value < 0) {
+        //         throw new Error('Age a must be positive number.')
+        //     }
+        // }
     },
     tokens: [{
         token: {
@@ -129,6 +131,7 @@ userSchema.methods.generateAuthToken = async function () {
     const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
 
     user.tokens = user.tokens.concat({ token })
+    // user.otp = user.otp.concat({ code })
     await user.save()
 
     return token
