@@ -1,0 +1,48 @@
+version: "3.7"
+services:
+  app:
+    image: app
+    restart: always
+    build: .
+    volumes:
+      - ./app:/app
+    networks:
+      domestics:
+        ipv4_address: 10.5.0.5
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "npm run dev"
+    depends_on:
+      - mongo
+    # links:
+    #   - mongo
+
+  mongo:
+    image: mongo 
+    restart: always
+    networks:
+      domestics:
+        ipv4_address: 10.5.0.6
+    ports:
+      - "27017:27017"
+
+  app-tests:
+    image: app 
+    networks:
+      domestics:
+        ipv4_address: 10.5.0.8
+    command: dockerize
+      -wait tcp://10.5.0.6:27017 -wait tcp://10.5.0.5:3000 -timeout 20s
+      sh -c "npm run test"
+    depends_on:
+      - app
+      - mongo
+
+networks:
+  domestics:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/16
+          gateway: 10.5.0.1
