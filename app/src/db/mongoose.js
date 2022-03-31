@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 const chalk = require('chalk');
+const secrets = require('../secrets/secrets')
 
-mongoose.connect(process.env.MONGODB_URL, {
+const dburl = secrets.read('mongodb_url') || process.env.MONGODB_URL
+
+mongoose.connect(dburl, {
     useUnifiedTopology: true,
     useNewUrlParser: true
 })

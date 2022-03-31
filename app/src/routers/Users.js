@@ -8,20 +8,20 @@ router.get('/', async (req, res) => {
     res.status(200).send("Heyoooo")
 })
 
-router.post('/users', async (req, res) => {
-    const user = new UserModel(req.body)
-    // console.log(user) dc
+// router.post('/users', async (req, res) => {
+//     const user = new UserModel(req.body)
+//     // console.log(user) dc
 
-    try {
-        const otpCode = await generateCode()
-        const token = await user.generateAuthToken()
-        // user.otpCode = otpCode
-        await user.save()
-        res.status(201).send({ user, token })
-    } catch (e) {
-        res.status(400).send(e)
-    }
-})
+//     try {
+//         const otpCode = await generateCode()
+//         const token = await user.generateAuthToken()
+//         // user.otpCode = otpCode
+//         await user.save()
+//         res.status(201).send({ user, token })
+//     } catch (e) {
+//         res.status(400).send(e)
+//     }
+// })
 
 router.get('/users', async (req, res) => {
     // sendMessage('Fuck you man!')
