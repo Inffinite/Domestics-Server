@@ -1,6 +1,12 @@
 version: "3.3"
 
-# For development
+# run in swarm
+
+secrets:
+  mongodb_url: 
+    external: true
+  port:
+    external: true
 
 services:
   app:
@@ -15,8 +21,11 @@ services:
         # ipv4_address: 10.5.0.5
     ports:
       - "3000:3000"
+    secrets:                    # secrets block only for 'web' service
+     - mongodb_url
+     - port
     command: >
-      sh -c "npm run dev"
+      sh -c "node src/index.js"
     depends_on:
       - mongo
     # links:
@@ -46,8 +55,9 @@ services:
 
 networks:
   domestics:
-    driver: bridge
+    driver: overlay
     # ipam:
     #   config:
     #     - subnet: 10.5.0.0/16
     #       gateway: 10.5.0.1
+
