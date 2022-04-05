@@ -4,6 +4,7 @@ const auth = require('../middleware/auth')
 // const { sendMessage, generateCode } = require('../functions/sms')
 const router = new express.Router()
 
+
 router.post('/users', async (req, res) => {
     const user = new User(req.body)
 
