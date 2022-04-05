@@ -45,14 +45,47 @@ router.post('/clientTag/delete', auth, async (req, res) => {
     }
 })
 
+router.post('/workerTag/delete', auth, async (req, res) => {
+    try {
+        await User.updateOne({ _id: req.user._id }, {
+            $pull: { "tagsWorker": { _id: req.body.tag_id } }
+        })
+
+        res.status(200).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
 router.post('/addClientTags', auth, async (req, res) => {
 
     try {
         const tags = req.body.tags
 
+        // loop through the submitted tags
+        // and add them to the database
         for (let i = 0; i < tags.length; i++) {
             await User.updateOne({ "_id": req.user._id }, {
                 $push: { "tagsClient": { "tag": tags[i] } }
+            })
+        }
+
+        res.status(201).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+router.post('/addWorkerTags', auth, async (req, res) => {
+
+    try {
+        const tags = req.body.tags
+
+        // loop through the submitted tags
+        // and add them to the database
+        for (let i = 0; i < tags.length; i++) {
+            await User.updateOne({ "_id": req.user._id }, {
+                $push: { "tagsWorker": { "tag": tags[i] } }
             })
         }
 
