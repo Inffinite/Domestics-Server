@@ -48,9 +48,9 @@ const userSchema = new mongoose.Schema({
         }
     }],
 
-    reviews: new mongoose.Schema({
+    reviews: {
         reviewer_id: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: String,
         },
 
         message: {
@@ -60,9 +60,7 @@ const userSchema = new mongoose.Schema({
         starsCount: {
             type: Number,
         }
-    }, {
-        timestamps: true
-    }),
+    },
 
     refferedTo: new mongoose.Schema({
         client_id: {
@@ -96,6 +94,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         trim: true,
+        select: false
     },
 
     imageUrl: {
