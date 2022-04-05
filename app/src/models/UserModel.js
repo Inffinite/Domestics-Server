@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
         }
     }],
 
-    reviews: {
+    reviews: [{
         reviewer_id: {
             type: String,
         },
@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema({
         starsCount: {
             type: Number,
         }
-    },
+    }],
 
     refferedTo: new mongoose.Schema({
         client_id: {

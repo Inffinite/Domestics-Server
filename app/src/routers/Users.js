@@ -1,7 +1,6 @@
 const express = require('express')
 const User = require('../models/UserModel')
 const auth = require('../middleware/auth')
-const { deleteOne } = require('../models/UserModel')
 // const { sendMessage, generateCode } = require('../functions/sms')
 const router = new express.Router()
 
@@ -17,14 +16,30 @@ router.post('/users', async (req, res) => {
     }
 })
 
+// delete a review with the review id
+// user can only delete their own review
+// reviewed_user_id is the id of the user who got reviewed
+// review_id is the id of the review itself
+router.post('/reviews/delete', auth, async (req, res) => {
+    try {
+        await User.updateOne({ _id: req.body.reviewed_user_id }, {
+            $pull: { reviews: { _id: req.body.review_id, "reviewer_id": req.user._id }  }
+        })
+
+        res.status(200).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
 // add a new review to a worker
 // cannot edit or delete review after adding it
 router.post('/users/review', auth, async (req, res) => {
     try {
         // a user cannot review himself
-        if(req.user._id == req.body.id){
-            return res.status(400).send()
-        }
+        // if(req.user._id == req.body.id){
+        //     return res.status(400).send()
+        // }
 
         const user = await User.findById(req.body.id)
 
@@ -32,7 +47,7 @@ router.post('/users/review', auth, async (req, res) => {
             res.status(400).send()
         }
 
-        var review = req.body.review 
+        var review = req.body.review
         review.reviewer_id = req.user._id
 
         await User.updateOne({ "_id": req.body.id }, {
