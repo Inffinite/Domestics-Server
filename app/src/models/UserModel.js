@@ -62,16 +62,17 @@ const userSchema = new mongoose.Schema({
         }
     }],
 
-    refferedTo: new mongoose.Schema({
-        client_id: {
-            type: mongoose.Schema.Types.ObjectId
+    refferedTo: [{
+        // the person being reffered
+        reffered: {
+            type: String
         },
-
-        refferrer: {
-            type: mongoose.Schema.Types.ObjectId
+        
+        // the person doing the reffering
+        refferer: {
+            type: String
         },
-    },
-        { timestamps: true }),
+    }],
 
     phone: {
         type: String,

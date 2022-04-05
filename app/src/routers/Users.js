@@ -95,6 +95,20 @@ router.post('/addWorkerTags', auth, async (req, res) => {
     }
 })
 
+// reffer a worker to a client
+router.post('/refferWorker', auth, async (req, res) => {
+
+    try {
+        await User.updateOne({ "_id": req.body.id }, {
+            $push: { "refferedTo": { "reffered":  req.body.reffered, "refferer": req.user._id } }
+        })
+
+        res.status(201).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
 // add a new review to a worker
 // cannot edit or delete review after adding it
 router.post('/users/review', auth, async (req, res) => {
