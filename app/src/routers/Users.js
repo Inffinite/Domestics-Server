@@ -23,10 +23,40 @@ router.post('/users', async (req, res) => {
 router.post('/reviews/delete', auth, async (req, res) => {
     try {
         await User.updateOne({ _id: req.body.reviewed_user_id }, {
-            $pull: { reviews: { _id: req.body.review_id, "reviewer_id": req.user._id }  }
+            $pull: { reviews: { _id: req.body.review_id, "reviewer_id": req.user._id } }
         })
 
         res.status(200).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+// delete a tag by its id
+router.post('/clientTag/delete', auth, async (req, res) => {
+    try {
+        await User.updateOne({ _id: req.user._id }, {
+            $pull: { "tagsClient": { _id: req.body.tag_id } }
+        })
+
+        res.status(200).send()
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+router.post('/addClientTags', auth, async (req, res) => {
+
+    try {
+        const tags = req.body.tags
+
+        for (let i = 0; i < tags.length; i++) {
+            await User.updateOne({ "_id": req.user._id }, {
+                $push: { "tagsClient": { "tag": tags[i] } }
+            })
+        }
+
+        res.status(201).send()
     } catch (e) {
         res.status(400).send(e)
     }
