@@ -7,9 +7,9 @@ secretRead.read = function read(secretName) {
         return fs.readFileSync(`/run/secrets/${secretName}`, 'utf8');
     } catch (e) {
         if (e.code !== 'ENOENT') {
-            console.log(`[-] Error occurred while reading ${secretName} secret`)
+            // console.log(`[-] Error occurred while reading ${secretName} secret`)
         } else {
-            console.log(`[-] ${secretName} secret not found`)
+            // console.log(`[-] ${secretName} secret not found`)
         }
 
         return false

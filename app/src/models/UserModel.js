@@ -34,12 +34,14 @@ const userSchema = new mongoose.Schema({
         default: false
     },
 
+    // tags a worker works under
     tagsWorker: [{
         tag: {
             type: String
         }
     }],
 
+    // tags a client is searching for
     tagsClient: [{
         tag: {
             type: String
@@ -47,7 +49,7 @@ const userSchema = new mongoose.Schema({
     }],
 
     reviews: new mongoose.Schema({
-        reviewer_id:  {
+        reviewer_id: {
             type: mongoose.Schema.Types.ObjectId,
         },
 
@@ -62,12 +64,6 @@ const userSchema = new mongoose.Schema({
         timestamps: true
     }),
 
-    otpCode: {
-        type: Number,
-        select: false,
-        default: 0
-    },
-
     refferedTo: new mongoose.Schema({
         client_id: {
             type: mongoose.Schema.Types.ObjectId
@@ -77,7 +73,7 @@ const userSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId
         },
     },
-    { timestamps: true }),
+        { timestamps: true }),
 
     phone: {
         type: String,
@@ -91,14 +87,27 @@ const userSchema = new mongoose.Schema({
         // }
     },
 
+    email: {
+        type: String,
+        required: true,
+        trim: true
+    },
+
+    password: {
+        type: String,
+        trim: true,
+    },
+
     imageUrl: {
         type: String,
+        trim: true
         // validate(value) {
         //     if (value < 0) {
         //         throw new Error('Age a must be positive number.')
         //     }
         // }
     },
+
     tokens: [{
         token: {
             type: String,
@@ -128,10 +137,9 @@ userSchema.methods.toJSON = function () {
 
 userSchema.methods.generateAuthToken = async function () {
     const user = this
-    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
 
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
     user.tokens = user.tokens.concat({ token })
-    // user.otp = user.otp.concat({ code })
     await user.save()
 
     return token
@@ -144,7 +152,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
         throw new Error('Unable to login.')
     }
 
-    const isMatch = await bcrypt.compare(password, user.password)
+    const isMatch = await bcrypt.compareSync(password, user.password)
 
     if (!isMatch) {
         throw new Error('Unable to login.')
@@ -158,7 +166,7 @@ userSchema.pre('save', async function (next) {
     const user = this
 
     if (user.isModified('password')) {
-        user.password = await bcrypt.hash(user.password, 8)
+        user.password = await bcrypt.hashSync(user.password, process.env.SALT)
     }
 
     next()
@@ -166,11 +174,11 @@ userSchema.pre('save', async function (next) {
 
 // Delete user tasks when the user is removed
 
-userSchema.pre('remove', async function (next) {
-    const user = this
-    await Task.deleteMany({ owner: user._id })
-    next()
-})
+// userSchema.pre('remove', async function (next) {
+//     const user = this
+//     await Task.deleteMany({ owner: user._id })
+//     next()
+// })
 
 const User = mongoose.model('User', userSchema)
 

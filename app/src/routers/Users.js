@@ -1,37 +1,74 @@
 const express = require('express')
-const UserModel = require('../models/UserModel')
+const User = require('../models/UserModel')
 const auth = require('../middleware/auth')
 // const { sendMessage, generateCode } = require('../functions/sms')
 const router = new express.Router()
 
-router.get('/', async (req, res) => {
-    res.status(200).send("Heyoooo")
+router.post('/users', async (req, res) => {
+    const user = new User(req.body)
+
+    try{
+        await user.save()
+        const token = await user.generateAuthToken()
+        res.status(201).send({ user, token })
+    } catch(e){
+        res.status(400).send(e)
+    }
 })
 
-// router.post('/users', async (req, res) => {
-//     const user = new UserModel(req.body)
-//     // console.log(user) dc
+router.post('/users/login', async (req, res) => {
+    try{
+        const user = await User.findByCredentials(req.body.email, req.body.password)
+        const token = await user.generateAuthToken()
+        res.send({ user, token })
+    }catch(e){
+        res.status(400).send()
+    }
+})
 
-//     try {
-//         const otpCode = await generateCode()
-//         const token = await user.generateAuthToken()
-//         // user.otpCode = otpCode
-//         await user.save()
-//         res.status(201).send({ user, token })
-//     } catch (e) {
-//         res.status(400).send(e)
-//     }
-// })
+router.post('/users/logout', auth, async (req, res) => {
+    try{
+        req.user.tokens = req.user.tokens.filter((token) => {
+            return token.token !== req.token
+        })
+        await req.user.save()
 
-router.get('/users', async (req, res) => {
-    // sendMessage('Fuck you man!')
-    const users = await UserModel.find()
+        res.send()
+    }catch(e){
+        res.status(500).send()
+    }
+})
 
-    if(!users){
-        res.status(400).send("No users found")
+router.post('/users/logoutAll', auth, async (req, res) => {
+    try{
+        req.user.tokens = []
+        await req.user.save()
+        res.send()
+    }catch(e){
+        res.status(500).send()
+    }
+})
+
+router.get('/users/me', auth, async (req, res) => {
+    res.send(req.user)
+})
+
+router.patch('/users/me', auth, async (req, res) => {
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ['fname', 'lname', 'email', 'isWorker', 'bio', 'phone', 'imageUrl', 'password']
+    const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
+
+    if(!isValidOperation){
+        return res.status(400).send({ error: 'Invalid updates' })
     }
 
-    res.status(200).send(users)
+    try {
+        updates.forEach((update) => req.user[update] = req.body[update])
+        await req.user.save()
+        res.send(req.user)
+    } catch(e){
+        res.status(400).send(e)
+    }
 })
 
 router.get('/sendMessage', async (req, res) => {
