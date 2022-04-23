@@ -1,0 +1,18 @@
+const mongoose = require('mongoose')
+const feedbackSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Types.ObjectId,
+        required: true,
+    },
+    message: {
+        type: String,
+        required: true,
+        trim: true
+    }
+}, {
+    timestamps: true
+})
+
+const Feedback = mongoose.model('Feedback', feedbackSchema)
+
+module.exports = Feedback
