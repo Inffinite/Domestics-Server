@@ -3,6 +3,7 @@ const validator = require('validator')
 const chalk = require('chalk')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+// const bcryptjs = require('bcryptjs')
 const userSchema = new mongoose.Schema({
     fname: {
         type: String,
@@ -94,8 +95,7 @@ const userSchema = new mongoose.Schema({
 
     password: {
         type: String,
-        trim: true,
-        select: false
+        trim: true
     },
 
     imageUrl: {
@@ -165,8 +165,13 @@ userSchema.statics.findByCredentials = async (email, password) => {
 userSchema.pre('save', async function (next) {
     const user = this
 
-    if (user.isModified('password')) {
-        user.password = await bcrypt.hashSync(user.password, process.env.SALT)
+    try {
+        if (user.isModified('password')) {
+            const salt = bcrypt.genSaltSync(10)
+            user.password = await bcrypt.hashSync(user.password, salt)
+        }   
+    } catch (e) {
+        console.log(e)
     }
 
     next()
