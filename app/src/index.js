@@ -6,12 +6,16 @@ const feedbackRouter = require('./routers/Feedback')
 const chalk = require('chalk')
 const secrets = require('./secrets/secrets')
 
+const swaggerUI = require('swagger-ui-express'),
+    swaggerDocument = require('./swagger.json')
+
 const port = secrets.read('port') || process.env.PORT
 
 const app = express()
 // const port = process.env.port
 
 app.use(express.json())
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument))
 app.use(userRouter)
 app.use(adminRouter)
 app.use(feedbackRouter)

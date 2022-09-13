@@ -139,7 +139,22 @@ router.post('/users/review', auth, async (req, res) => {
     }
 })
 
+router.post('/users/checkusername', async (req, res) => {
+    try {
+        const user = await User.find({fname: req.body.fname, lname: req.body.lname})
 
+        console.log(user)
+        
+        if(user.length == 0){
+            res.status(200).send()
+        }
+
+        res.status(400).send()
+    } catch (e) {
+        console.log(e)
+        res.status(400).send()
+    }
+})
 
 router.post('/users/login', async (req, res) => {
     try {

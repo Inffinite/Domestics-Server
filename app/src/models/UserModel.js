@@ -77,7 +77,6 @@ const userSchema = new mongoose.Schema({
 
     phone: {
         type: String,
-        required: true,
         // minlength: 7,
         trim: true,
         // validate(value) {
@@ -89,7 +88,6 @@ const userSchema = new mongoose.Schema({
 
     email: {
         type: String,
-        required: true,
         trim: true
     },
 
