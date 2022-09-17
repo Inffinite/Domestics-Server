@@ -169,6 +169,21 @@ router.post('/users/checkemail', async (req, res) => {
     }
 })
 
+router.post('/users/checkphone', auth, async (req, res) => {
+    try {
+        const user = await User.find({phone: req.body.phone})
+        
+        if(user.length == 0){
+            res.status(200).send()
+        }
+
+        res.status(400).send()
+    } catch (e) {
+        console.log(e)
+        res.status(400).send()
+    }
+})
+
 router.post('/users/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
@@ -203,7 +218,7 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 })
 
-router.post('/users/me', auth, async (req, res) => {
+router.get('/users/me', auth, async (req, res) => {
     res.send(req.user)
 })
 
