@@ -116,9 +116,9 @@ router.post('/refferWorker', auth, async (req, res) => {
 router.post('/users/review', auth, async (req, res) => {
     try {
         // a user cannot review himself
-        // if(req.user._id == req.body.id){
-        //     return res.status(400).send()
-        // }
+        if(req.user._id == req.body.id){
+            return res.status(400).send()
+        }
 
         const user = await User.findById(req.body.id)
 
@@ -142,8 +142,21 @@ router.post('/users/review', auth, async (req, res) => {
 router.post('/users/checkusername', async (req, res) => {
     try {
         const user = await User.find({fname: req.body.fname, lname: req.body.lname})
+        
+        if(user.length == 0){
+            res.status(200).send()
+        }
 
-        console.log(user)
+        res.status(400).send()
+    } catch (e) {
+        console.log(e)
+        res.status(400).send()
+    }
+})
+
+router.post('/users/checkemail', async (req, res) => {
+    try {
+        const user = await User.find({email: req.body.email})
         
         if(user.length == 0){
             res.status(200).send()
@@ -190,7 +203,7 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 })
 
-router.get('/users/me', auth, async (req, res) => {
+router.post('/users/me', auth, async (req, res) => {
     res.send(req.user)
 })
 
