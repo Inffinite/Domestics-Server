@@ -238,7 +238,13 @@ router.post('/users/profileImage', auth, upload.single('image'), async (req, res
 
     const buffer = await sharp(req.file.buffer).toFormat('jpg').toBuffer()
     var filename = req.file.originalname
+
+    // change image name to have specific image
+    // file extension if you need to
     var extension = filename.substr(filename.indexOf('.'))
+
+    // use jpg for now
+    // might change later or never
     var imageName = `${req.user._id}.jpg`
 
     try {
