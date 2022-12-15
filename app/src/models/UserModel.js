@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema({
         // }
     },
 
+    location: {
+        type: String,
+        default: "Nairobi, Kenya",
+    },
+
     bio: {
         type: String,
         required: true,
@@ -59,8 +64,10 @@ const userSchema = new mongoose.Schema({
         },
 
         starsCount: {
-            type: Number,
+            type: String,
         }
+    }, {
+        timestamps: true,
     }],
 
     refferedTo: [{
@@ -68,11 +75,13 @@ const userSchema = new mongoose.Schema({
         reffered: {
             type: String
         },
-        
+
         // the person doing the reffering
         refferer: {
             type: String
         },
+    }, {
+        timestamps: true,
     }],
 
     phone: {
@@ -111,6 +120,8 @@ const userSchema = new mongoose.Schema({
             type: String,
             required: true
         }
+    }, {
+        timestamps: true,
     }]
 }, {
     timestamps: true
@@ -167,7 +178,7 @@ userSchema.pre('save', async function (next) {
         if (user.isModified('password')) {
             const salt = bcrypt.genSaltSync(10)
             user.password = await bcrypt.hashSync(user.password, salt)
-        }   
+        }
     } catch (e) {
         console.log(e)
     }

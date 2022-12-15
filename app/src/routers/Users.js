@@ -1,6 +1,9 @@
 const express = require('express')
 const User = require('../models/UserModel')
 const auth = require('../middleware/auth')
+const multer = require('multer')
+const sharp = require('sharp')
+const minioClient = require("../db/storage")
 // const { sendMessage, generateCode } = require('../functions/sms')
 const router = new express.Router()
 
@@ -102,7 +105,7 @@ router.post('/refferWorker', auth, async (req, res) => {
 
     try {
         await User.updateOne({ "_id": req.body.id }, {
-            $push: { "refferedTo": { "reffered":  req.body.reffered, "refferer": req.user._id } }
+            $push: { "refferedTo": { "reffered": req.body.reffered, "refferer": req.user._id } }
         })
 
         res.status(201).send()
@@ -116,7 +119,7 @@ router.post('/refferWorker', auth, async (req, res) => {
 router.post('/users/review', auth, async (req, res) => {
     try {
         // a user cannot review himself
-        if(req.user._id == req.body.id){
+        if (req.user._id == req.body.id) {
             return res.status(400).send()
         }
 
@@ -141,9 +144,9 @@ router.post('/users/review', auth, async (req, res) => {
 
 router.post('/users/checkusername', async (req, res) => {
     try {
-        const user = await User.find({fname: req.body.fname, lname: req.body.lname})
-        
-        if(user.length == 0){
+        const user = await User.find({ fname: req.body.fname, lname: req.body.lname })
+
+        if (user.length == 0) {
             res.status(200).send()
         }
 
@@ -156,9 +159,9 @@ router.post('/users/checkusername', async (req, res) => {
 
 router.post('/users/checkemail', async (req, res) => {
     try {
-        const user = await User.find({email: req.body.email})
-        
-        if(user.length == 0){
+        const user = await User.find({ email: req.body.email })
+
+        if (user.length == 0) {
             res.status(200).send()
         }
 
@@ -169,11 +172,11 @@ router.post('/users/checkemail', async (req, res) => {
     }
 })
 
-router.post('/users/checkphone', auth, async (req, res) => {
+router.post('/users/checkphone', async (req, res) => {
     try {
-        const user = await User.find({phone: req.body.phone})
-        
-        if(user.length == 0){
+        const user = await User.find({ phone: req.body.phone })
+
+        if (user.length == 0) {
             res.status(200).send()
         }
 
@@ -218,19 +221,89 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     }
 })
 
+const upload = multer({
+    //limits: {
+    //   fileSize: 1000000
+    // },
+    fileFilter(req, file, cb) {
+        if (!file.originalname.match(/\.(jpeg|jpg|png)$/)) {
+            return cb(new Error('Please upload a image file.'))
+        }
+
+        cb(undefined, true)
+    }
+})
+
+router.post('/users/profileImage', auth, upload.single('image'), async (req, res) => {
+
+    const buffer = await sharp(req.file.buffer).toFormat('jpg').toBuffer()
+    var filename = req.file.originalname
+    var extension = filename.substr(filename.indexOf('.'))
+    var imageName = `${req.user._id}.jpg`
+
+    try {
+        minioClient.putObject('domestics', imageName, buffer, req.file.size, function (err, etag) {
+            if (err) return console.log(err)
+            res.status(200).send()
+        });
+    } catch (e) {
+        res.status(400).send(e)
+    }
+})
+
+router.get('/users/profileImage', auth, async (req, res) => {
+    let data;
+    await minioClient.getObject('domestics', `${req.user._id}.jpg`, function (e, dataStream) {
+        if (e) {
+            return console.log(e)
+        }
+        dataStream.on('data', function (chunk) {
+            data = !data ? Buffer.from(chunk) : Buffer.concat([data, chunk])
+        })
+        dataStream.on('end', function () {
+            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+            res.write(data)
+            res.end();
+        })
+        dataStream.on('error', function (e) {
+            console.log(e)
+            res.status(500).send(e)
+        })
+    })
+})
+
+router.get('/users/workers', auth, async (req, res) => {
+    var workers = await User.find({ isWorker: true })
+        .sort({ createdAt: -1 })
+        .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews", "location"])
+
+    res.status(200).send(workers)
+})
+
 router.get('/users/me', auth, async (req, res) => {
     res.send(req.user)
 })
 
-// router.get('/myusers', async (req, res) => {
-//     try {
-//         const users = await User.find().sort({ createdAt: -1 })
-//         res.status(200).send(users)
-//     } catch (e) {
-//         console.log(e)
-//     }
+router.get('/users/worker', auth, async (req, res) => {
+    try {
+        const worker = await User.find({ _id: req.query.workerid, isWorker: true })
+            .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews"])
 
-// })
+        res.status(200).send(worker)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
+
+//  router.get('/myusers', async (req, res) => {
+//      try {
+//          const users = await User.find().sort({ isWorker: true, createdAt: -1 })
+//          res.status(200).send(users)
+//      } catch (e) {
+//          console.log(e)
+//      }
+
+//  })
 
 router.patch('/users/me', auth, async (req, res) => {
     const updates = Object.keys(req.body)
