@@ -35,6 +35,16 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
 
+    // profileVisits: {
+    //     type: Number,
+    //     default: 0
+    // },
+
+    // profileSaves: {
+    //     type: Number,
+    //     default: 0
+    // },
+
     isWorker: {
         type: Boolean,
         default: false

@@ -325,6 +325,18 @@ router.get('/users/worker', auth, async (req, res) => {
     }
 })
 
+router.get('/users/all', auth, async (req, res) => {
+    try {
+        const users = await User.find()
+            .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews"])
+            .sort({ createdAt: -1 })
+
+        res.status(200).send(users)
+    } catch (e) {
+        res.status(400).send()
+    }
+})
+
 //  router.get('/myusers', async (req, res) => {
 //      try {
 //          const users = await User.find().sort({ isWorker: true, createdAt: -1 })
