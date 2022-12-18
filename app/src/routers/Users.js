@@ -235,7 +235,6 @@ const upload = multer({
 })
 
 router.post('/users/profileImage', auth, upload.single('image'), async (req, res) => {
-
     const buffer = await sharp(req.file.buffer).toFormat('jpg').toBuffer()
     var filename = req.file.originalname
 
@@ -257,25 +256,50 @@ router.post('/users/profileImage', auth, upload.single('image'), async (req, res
     }
 })
 
-router.get('/users/profileImage', auth, async (req, res) => {
+router.get('/users/profileImage', async (req, res) => {
     let data;
-    await minioClient.getObject('domestics', `${req.user._id}.jpg`, function (e, dataStream) {
-        if (e) {
-            return console.log(e)
+    let image;
+    try {
+        var profileUser = await User.findById(req.query.id)
+    } catch (e) {
+        return res.status(400).send()
+    }
+
+    if (!profileUser) {
+        image = "default"
+    } else {
+        switch (profileUser.imageUrl) {
+            case "default":
+                console.log("default")
+                image = "default"
+                break;
+
+            default:
+                image = req.query.id
+                break;
         }
-        dataStream.on('data', function (chunk) {
-            data = !data ? Buffer.from(chunk) : Buffer.concat([data, chunk])
+    }
+
+    try {
+        await minioClient.getObject('domestics', `${image}.jpg`, function (e, dataStream) {
+            if (e) {
+                return res.status(400).send()
+            }
+            dataStream.on('data', function (chunk) {
+                data = !data ? Buffer.from(chunk) : Buffer.concat([data, chunk])
+            })
+            dataStream.on('end', function () {
+                res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+                res.write(data)
+                res.end();
+            })
+            dataStream.on('error', function (e) {
+                res.status(400).send()
+            })
         })
-        dataStream.on('end', function () {
-            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-            res.write(data)
-            res.end();
-        })
-        dataStream.on('error', function (e) {
-            console.log(e)
-            res.status(500).send(e)
-        })
-    })
+    } catch (e) {
+        res.status(400).send()
+    }
 })
 
 router.get('/users/workers', auth, async (req, res) => {
@@ -292,7 +316,7 @@ router.get('/users/me', auth, async (req, res) => {
 
 router.get('/users/worker', auth, async (req, res) => {
     try {
-        const worker = await User.find({ _id: req.query.workerid, isWorker: true })
+        const worker = await User.find({ _id: req.query.workerid })
             .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews"])
 
         res.status(200).send(worker)

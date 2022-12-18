@@ -107,7 +107,8 @@ const userSchema = new mongoose.Schema({
 
     imageUrl: {
         type: String,
-        trim: true
+        trim: true,
+        default: "default",
         // validate(value) {
         //     if (value < 0) {
         //         throw new Error('Age a must be positive number.')
