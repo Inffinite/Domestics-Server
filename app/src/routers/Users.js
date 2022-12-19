@@ -25,6 +25,11 @@ const randomCharacters = async () => {
 }
 
 router.post('/users', async (req, res) => {
+    req.body.notifications = {
+        title: "Domestics Team",
+        message: "Welcome to our platform, find local professionals to help you with your tasks or connect with clients in your niche.",
+    }
+
     const user = new User(req.body)
 
     try {
@@ -130,6 +135,16 @@ router.post('/refferWorker', auth, async (req, res) => {
     }
 })
 
+// router.get('/users/readAllNotifications', auth, async (req, res) => {
+//     var notifications = req.user.notifications
+
+//     for (let i = 0; i < notifications.length; i++) {
+//         await User.updateOne({ "_id": req.user._id, "notifications" }, {
+//             $set: { notifications }
+//         })
+//     }
+// })
+
 // add a new review to a worker
 // cannot edit or delete review after adding it
 router.post('/users/review', auth, async (req, res) => {
@@ -150,6 +165,15 @@ router.post('/users/review', auth, async (req, res) => {
 
         await User.updateOne({ "_id": req.body.id }, {
             $push: { "reviews": review }
+        })
+
+        await User.updateOne({ "_id": req.body.id }, {
+            $push: {
+                "notifications": {
+                    title: "New review",
+                    message: `You have received ${review.starsCount} stars from ${req.user.fname} ${req.user.lname} with the message - ${review.message}`,
+                }
+            }
         })
 
         res.status(201).send()
@@ -251,7 +275,6 @@ const upload = multer({
 })
 
 router.post('/users/profileImage', auth, upload.single('image'), async (req, res) => {
-    console.log("UPLOADING IMAGE")
     const buffer = await sharp(req.file.buffer).toFormat('jpg').toBuffer()
     var filename = req.file.originalname
 
@@ -284,8 +307,24 @@ router.get('/users/profileImage', async (req, res) => {
     let data;
     let image;
 
+    switch (req.query.imageCode) {
+        case "default":
+            image = "default"
+            break;
+
+        default:
+            const user = await User.find({ imageUrl: req.query.imageCode })
+
+            if (user.length == 0) {
+                image = "default"
+            } else {
+                image = req.query.imageCode
+            }
+            break;
+    }
+
     try {
-        await minioClient.getObject('domestics', `${req.query.imageCode}.jpg`, function (e, dataStream) {
+        await minioClient.getObject('domestics', `${image}.jpg`, function (e, dataStream) {
             if (e) {
                 return res.status(400).send()
             }
@@ -332,7 +371,7 @@ router.get('/users/worker', auth, async (req, res) => {
 router.get('/users/all', auth, async (req, res) => {
     try {
         const users = await User.find()
-            .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews"])
+            .select(["_id", "fname", "lname", "bio", "phone", "imageUrl", "tagsWorker", "reviews", "notifications"])
             .sort({ createdAt: -1 })
 
         res.status(200).send(users)
@@ -353,7 +392,7 @@ router.get('/users/all', auth, async (req, res) => {
 
 router.patch('/users/me', auth, async (req, res) => {
     const updates = Object.keys(req.body)
-    const allowedUpdates = ['fname', 'lname', 'email', 'isWorker', 'bio', 'phone', 'imageUrl', 'password']
+    const allowedUpdates = ['fname', 'lname', 'email', 'isWorker', 'bio', 'location', 'phone', 'imageUrl', 'password']
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
 
     if (!isValidOperation) {

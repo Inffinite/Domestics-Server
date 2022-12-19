@@ -35,6 +35,20 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
 
+    notifications: [{
+        title: {
+            type: String,
+        },
+        read: {
+            type: Boolean,
+            default: false,
+        },
+        message: {
+            type: String,
+            trim: true,
+        },
+    }],
+
     // profileVisits: {
     //     type: Number,
     //     default: 0
@@ -53,7 +67,8 @@ const userSchema = new mongoose.Schema({
     // tags a worker works under
     tagsWorker: [{
         tag: {
-            type: String
+            type: String,
+            default: "Human"
         }
     }],
 
