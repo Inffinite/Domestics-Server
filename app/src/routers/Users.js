@@ -7,6 +7,22 @@ const minioClient = require("../db/storage")
 // const { sendMessage, generateCode } = require('../functions/sms')
 const router = new express.Router()
 
+const randomCharacters = async () => {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < 20; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
+    while (true) {
+        console.log(result)
+        const user = await User.find({ imageUrl: result })
+        if (user.length <= 0) {
+            return result
+        }
+    }
+}
 
 router.post('/users', async (req, res) => {
     const user = new User(req.body)
@@ -235,16 +251,24 @@ const upload = multer({
 })
 
 router.post('/users/profileImage', auth, upload.single('image'), async (req, res) => {
+    console.log("UPLOADING IMAGE")
     const buffer = await sharp(req.file.buffer).toFormat('jpg').toBuffer()
     var filename = req.file.originalname
 
     // change image name to have specific image
     // file extension if you need to
-    var extension = filename.substr(filename.indexOf('.'))
+    // var extension = filename.substr(filename.indexOf('.'))
+    const chars = await randomCharacters()
+    var data = {
+        "imageUrl": `${chars}`
+    }
+    const updates = Object.keys(data)
+    updates.forEach((update) => req.user[update] = data[update])
+    await req.user.save()
 
     // use jpg for now
     // might change later or never
-    var imageName = `${req.user._id}.jpg`
+    var imageName = `${chars}.jpg`
 
     try {
         minioClient.putObject('domestics', imageName, buffer, req.file.size, function (err, etag) {
@@ -259,29 +283,9 @@ router.post('/users/profileImage', auth, upload.single('image'), async (req, res
 router.get('/users/profileImage', async (req, res) => {
     let data;
     let image;
-    try {
-        var profileUser = await User.findById(req.query.id)
-    } catch (e) {
-        return res.status(400).send()
-    }
-
-    if (!profileUser) {
-        image = "default"
-    } else {
-        switch (profileUser.imageUrl) {
-            case "default":
-                console.log("default")
-                image = "default"
-                break;
-
-            default:
-                image = req.query.id
-                break;
-        }
-    }
 
     try {
-        await minioClient.getObject('domestics', `${image}.jpg`, function (e, dataStream) {
+        await minioClient.getObject('domestics', `${req.query.imageCode}.jpg`, function (e, dataStream) {
             if (e) {
                 return res.status(400).send()
             }
